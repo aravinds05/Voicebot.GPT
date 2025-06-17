@@ -1,5 +1,5 @@
 # VoiceBot.GPT
-An AI-powered voice assistant chatbot using OpenAI GPT and speech input/output.
+An AI-powered voice assistant chatbot using OpenAI GPT and speech input/output done fro the assessment round of Home.LLC
 
 ## Features
 
