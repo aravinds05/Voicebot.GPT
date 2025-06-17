@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Voice Bot</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: #0d0d0d;
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+
+    .input-box {
+      width: 80%;
+      max-width: 600px;
+      min-height: 3em;
+      padding: 1em;
+      border-radius: 10px;
+      font-size: 1.2em;
+      text-align: left;
+      --glow-color: rgb(231, 127, 188);
+      --glow-spread-color: rgba(238, 181, 221, 0.763);
+      --enhanced-glow-color: rgb(231, 206, 255);
+      --btn-color: rgb(137, 49, 118);
+      border: 0.25em solid var(--glow-color);
+      padding: 1em 3em;
+      color: var(--glow-color);
+      font-size: 15px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      outline: none;
+    }
+
+
+    .mic-button {
+      --glow-color: rgb(231, 127, 188);
+      --glow-spread-color: rgba(238, 181, 221, 0.763);
+      --enhanced-glow-color: rgb(231, 206, 255);
+      --btn-color: rgb(137, 49, 118);
+      border: 0.25em solid var(--glow-color);
+      padding: 1em 3em;
+      color: var(--glow-color);
+      font-size: 1.1em;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+
+    .mic-button:hover {
+      background-color: #d3a3ff;
+    }
+
+
+    .status {
+      margin-top: 10px;
+      color: #ccc;
+      font-size: 0.9em;
+    }
+    .api-key-input {
+    width: 300px;
+    padding: 0.8em;
+    border-radius: 8px;
+    font-size: 1em;
+    --glow-color: rgb(231, 127, 188);
+    border: 0.2em solid var(--glow-color);
+    color: var(--glow-color);
+    background-color: #0d0d0d;
+    outline: none;
+    margin-right: 8px;
+    }
+
+
+  .api-key-button {
+    --glow-color: rgb(231, 127, 188);
+    border: 0.2em solid var(--glow-color);
+    padding: 0.8em 1.5em;
+    color: var(--glow-color);
+    background-color: #0d0d0d;
+    border-radius: 8px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    }
+
+
+  .api-key-button:hover {
+    background-color: #d3a3ff;
+    }
+  </style>
+</head>
+<body>
+
+
+  <!-- API Key Input -->
+  <div style="margin-bottom: 10px;">
+    <input type="text" id="apiKeyInput" class="api-key-input" placeholder="Enter your OpenAI API Key">
+    <button id="saveApiKeyButton" class="api-key-button" onclick="saveApiKey()">Save Key</button>
+  <div class="chat-container">
+    <div id="inputArea" class="input-box" contenteditable="true" placeholder="Speak something...">
+      Ask anything through audio input or text
+    </div>
+    <button class="mic-button" onclick="startListening()">🎤</button>
+    <button class="mic-button" onclick="sendText()">Send</button>
+  </div>
+ 
+  <div class="status" id="statusText">Not listening</div>
+
+
+  <script>
+    const inputArea = document.getElementById('inputArea');
+    const statusText = document.getElementById('statusText');
+
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+
+
+    let clearedPlaceholder = false;
+    const placeholderText = "Ask anything through audio input or text";
+    let timeoutId = null;
+    let receivedResult = false;
+    let userApiKey = "";  // To store user provided API key
+
+
+    function saveApiKey() {
+      const apiKeyInput = document.getElementById('apiKeyInput').value.trim();
+      if (apiKeyInput) {
+        userApiKey = apiKeyInput;
+        statusText.textContent = "API Key saved.";
+      } else {
+        statusText.textContent = "Please enter a valid API Key.";
+      }
+    }
+
+
+    recognition.onstart = () => {
+      receivedResult = false;
+      statusText.textContent = "Listening...";
+
+
+      timeoutId = setTimeout(() => {
+        if (!receivedResult) {
+          recognition.stop();
+          statusText.textContent = "No speech detected. Stopped after 7s.";
+        }
+      }, 7000);
+    };
+
+
+    recognition.onresult = async (event) => {
+      const transcript = event.results[0][0].transcript;
+      inputArea.innerText = transcript;
+      clearedPlaceholder = true;
+      receivedResult = true;
+      clearTimeout(timeoutId);
+      statusText.textContent = "Speech received. Thinking...";
+
+
+      await sendMessage(transcript);
+    };
+
+
+    recognition.onerror = (event) => {
+      clearTimeout(timeoutId);
+      statusText.textContent = `Error: ${event.error}`;
+    };
+
+
+    recognition.onend = () => {
+      clearTimeout(timeoutId);
+      if (!receivedResult) {
+        statusText.textContent = "Not listening (timeout or stopped)";
+      }
+    };
+
+
+    function startListening() {
+      recognition.start();
+    }
+
+
+    async function sendText() {
+      const text = inputArea.innerText.trim();
+      if (text && text !== placeholderText) {
+        statusText.textContent = "Sending...";
+        await sendMessage(text);
+      }
+    }
+
+
+    async function sendMessage(message) {
+      if (!userApiKey) {
+        statusText.textContent = "Please enter and save your OpenAI API Key first.";
+        return;
+      }
+
+
+      const res = await fetch("http://127.0.0.1:8000/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, api_key: userApiKey })
+      });
+
+
+      const data = await res.json();
+
+
+      if (data.response) {
+        const botReply = data.response;
+        statusText.textContent = "Bot: " + botReply;
+
+
+        const utterance = new SpeechSynthesisUtterance(botReply);
+        speechSynthesis.speak(utterance);
+      } else if (data.error) {
+        statusText.textContent = "Error: " + data.error;
+      } else {
+        statusText.textContent = "Unknown error from server.";
+      }
+    }
+
+
+    inputArea.addEventListener("input", () => {
+      if (!clearedPlaceholder && inputArea.innerText.trim() === placeholderText) {
+        inputArea.innerText = "";
+      }
+      clearedPlaceholder = true;
+    });
+
+
+    inputArea.addEventListener("click", () => {
+      if (!clearedPlaceholder && inputArea.innerText.trim() === placeholderText) {
+        inputArea.innerText = "";
+        clearedPlaceholder = true;
+      }
+    });
+
+
+    // Support Enter key
+    inputArea.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        sendText();
+      }
+    });
+  </script>
+</body>

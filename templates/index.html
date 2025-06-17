@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Glowing Button</title>
+  <style>
+    button {
+        --glow-color: rgb(243, 23, 151);
+        --glow-spread-color: rgba(196, 135, 178, 0.763);
+        --enhanced-glow-color: rgb(231, 206, 255);
+        --btn-color: rgb(137, 49, 118);
+        border: 0.25em solid var(--glow-color);
+        padding: 1em 3em;
+        color: var(--glow-color);
+        font-size: 15px;
+        font-weight: bold;
+        cursor: pointer;
+        background-color: var(--btn-color);
+        border-radius: 1em;
+        outline: none;
+        box-shadow: 0 0 1em 0.25em var(--glow-color),
+            0 0 4em 1em var(--glow-spread-color),
+            inset 0 0 0.74em 0.25em var(--glow-color);
+        text-shadow: 0 0 0.5em var(--glow-color);
+        position: relative;
+        transition: all 0.3s;
+        }
+
+        button::after {
+        pointer-events: none;
+        content: "";
+        position: absolute;
+        top: 120%;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        background-color: var(--glow-spread-color);
+        filter: blur(2em);
+        opacity: 0.7;
+        transform: perspective(1.5em) rotateX(35deg) scale(1, 0.6);
+        }
+
+        button:hover {
+        color: var(--btn-color);
+        background-color: var(--glow-color);
+        box-shadow: 0 0 1em 0.25em var(--glow-color),
+        0 0 4em 2em var(--glow-spread-color),
+        inset 0 0 0.75em 0.25em var(--glow-color);
+        }
+
+        button:active {
+        box-shadow: 0 0 0.6em 0.25em var(--glow-color),
+        0 0 2.5em 2em var(--glow-spread-color),
+        inset 0 0 0.5em 0.25em var(--glow-color);
+        }
+</style>
+</head>
+<body style="background: #1a1a1a; display: flex; justify-content: center; align-items: center; height: 100vh;">
+<a href="voicebot.html">
+  <button class="glow-button">Home.LLC OpenAPI Challenge</button>
+
+</a>
+</body>
+</html>
