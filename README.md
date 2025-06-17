@@ -1,3 +1,4 @@
+#VoiceBot.GPT
 An AI-powered voice assistant chatbot using OpenAI GPT and speech input/output.
 
 ## Features
@@ -11,4 +12,4 @@ An AI-powered voice assistant chatbot using OpenAI GPT and speech input/output.
 
 1️⃣ User enters their OpenAI API key  
 2️⃣ User speaks or types a message  
-3️⃣ Bot replies with text and voi
+3️⃣ Bot replies with text and voice 
