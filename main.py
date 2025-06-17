@@ -20,28 +20,21 @@ app.add_middleware(
 
 # Serve HTML templates
 templates = Jinja2Templates(directory="templates")
-
-# Static files (optional)
-#app.mount("/static", StaticFiles(directory="static"), name="static")
-
 # Request model
 class ChatRequest(BaseModel):
     message: str
     api_key: str
-@app.get("/")
-def root():
-    return {"message": "Backend running"}
+@app.get("/") #links the starting backend page to the index.html
+def index(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 # Home page (index)
 @app.get("/index")
 def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
-
 # Voicebot page
 @app.get("/voicebot")
 def voicebot_page(request: Request):
     return templates.TemplateResponse("voicebot.html", {"request": request})
-
-# Chat endpoint
 @app.post("/chat")
 async def chat(request: ChatRequest):
     try:
@@ -57,13 +50,11 @@ async def chat(request: ChatRequest):
             ]
         )
         return {"response": response.choices[0].message.content}
-
     except openai.RateLimitError:
         return JSONResponse(
             status_code=429,
             content={"error": "OpenAI API quota exceeded. Please check your plan or try again later."}
         )
-    
     except openai.AuthenticationError:
         return JSONResponse(
             status_code=401,
