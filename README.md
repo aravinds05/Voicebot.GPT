@@ -1,4 +1,4 @@
-#VoiceBot.GPT
+# VoiceBot.GPT
 An AI-powered voice assistant chatbot using OpenAI GPT and speech input/output.
 
 ## Features
