@@ -99,11 +99,7 @@
 <body>
 
 
-  <!-- API Key Input -->
-  <div style="margin-bottom: 10px;">
-    <input type="text" id="apiKeyInput" class="api-key-input" placeholder="Enter your OpenAI API Key">
-    <button id="saveApiKeyButton" class="api-key-button" onclick="saveApiKey()">Save Key</button>
-  <div class="chat-container">
+    <div class="chat-container">
     <div id="inputArea" class="input-box" contenteditable="true" placeholder="Speak something...">
       Ask anything through audio input or text
     </div>
@@ -129,21 +125,8 @@
     const placeholderText = "Ask anything through audio input or text";
     let timeoutId = null;
     let receivedResult = false;
-    let userApiKey = "";  // To store user provided API key
 
-
-    function saveApiKey() {
-      const apiKeyInput = document.getElementById('apiKeyInput').value.trim();
-      if (apiKeyInput) {
-        userApiKey = apiKeyInput;
-        statusText.textContent = "API Key saved.";
-      } else {
-        statusText.textContent = "Please enter a valid API Key.";
-      }
-    }
-
-
-    recognition.onstart = () => {
+      recognition.onstart = () => {
       receivedResult = false;
       statusText.textContent = "Listening...";
 
@@ -197,38 +180,31 @@
       }
     }
 
-
-    async function sendMessage(message) {
-      if (!userApiKey) {
-        statusText.textContent = "Please enter and save your OpenAI API Key first.";
-        return;
-      }
-
-
-      const res = await fetch("http://127.0.0.1:8000/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, api_key: userApiKey })
+     async function sendMessage(message) {
+      try {
+       const res = await fetch("/chat", {
+       method: "POST",
+       headers: { "Content-Type": "application/json" },
+       body: JSON.stringify({ message })
       });
 
+    const data = await res.json();
 
-      const data = await res.json();
+    if (data.response) {
+      const botReply = data.response;
+      statusText.textContent = "Bot: " + botReply;
 
-
-      if (data.response) {
-        const botReply = data.response;
-        statusText.textContent = "Bot: " + botReply;
-
-
-        const utterance = new SpeechSynthesisUtterance(botReply);
-        speechSynthesis.speak(utterance);
-      } else if (data.error) {
-        statusText.textContent = "Error: " + data.error;
-      } else {
-        statusText.textContent = "Unknown error from server.";
-      }
+      const utterance = new SpeechSynthesisUtterance(botReply);
+      speechSynthesis.speak(utterance);
+    } else if (data.error) {
+      statusText.textContent = "Error: " + data.error;
+    } else {
+      statusText.textContent = "Unknown error from server.";
     }
-
+  } catch (err) {
+    statusText.textContent = "Fetch failed: " + err.message;
+  }
+}
 
     inputArea.addEventListener("input", () => {
       if (!clearedPlaceholder && inputArea.innerText.trim() === placeholderText) {
@@ -237,16 +213,13 @@
       clearedPlaceholder = true;
     });
 
-
     inputArea.addEventListener("click", () => {
       if (!clearedPlaceholder && inputArea.innerText.trim() === placeholderText) {
         inputArea.innerText = "";
         clearedPlaceholder = true;
       }
     });
-
-
-    // Support Enter key
+    
     inputArea.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
         event.preventDefault();
